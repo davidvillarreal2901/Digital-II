@@ -1,0 +1,32 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+
+# LiteX / FPGA build
+build/
+obj_dir/
+
+# Simulation
+*.vcd
+*.fst
+a.out
+
+# Generated FPGA files
+*.json
+*.config
+*.bit
+*.svf
+
+# Firmware generated files
+*.bin
+*.elf
+*.map
+*.o
+*.a
+
+# Editors
+.vscode/
+.idea/
