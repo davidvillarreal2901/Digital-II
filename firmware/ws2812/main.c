@@ -1,6 +1,7 @@
 #include <stdint.h>
 
 #include <generated/csr.h>
+#include "imagen_ws2812.h" //Para la imagen de prueba del WS2812
 
 
 // -----------------------------------------------------------------------------
@@ -363,6 +364,43 @@ static void test_x(void)
     ws2812_show();
 }
 
+static void test_image(void)
+{
+    uint32_t pixel;
+
+    uart_puts_raw(
+        "[TEST] Imagen RGB 8x8\r\n"
+    );
+
+
+    for (
+        pixel = 0;
+        pixel < IMAGEN_WS2812_PIXELS;
+        pixel++
+    ) {
+        ws2812_set_pixel(
+            pixel,
+            imagen_ws2812[pixel]
+        );
+    }
+
+
+    if (!ws2812_show()) {
+        uart_puts_raw(
+            "ERROR: timeout mostrando imagen\r\n"
+        );
+
+        return;
+    }
+
+
+    delay(40000000);
+
+
+    ws2812_clear();
+    ws2812_show();
+}
+
 
 // -----------------------------------------------------------------------------
 // Programa principal
@@ -419,6 +457,10 @@ int main(void)
 
 
         test_x();
+
+        delay(5000000);
+
+        test_image();
 
         delay(5000000);
     }
