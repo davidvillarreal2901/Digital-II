@@ -14,6 +14,7 @@ from migen import *
 from litex.gen import *
 
 from litex.build.io import DDROutput
+from litex.build.generic_platform import Pins, IOStandard #Pines para el ws2812
 
 from litex_boards.platforms import colorlight_i5
 
@@ -37,6 +38,18 @@ if str(PERIFERICOS_DIR) not in sys.path:
     sys.path.insert(0, str(PERIFERICOS_DIR))
 
 from calculadora import Calculator
+from ws2812 import WS2812
+
+# WS2812 -------------------------------------------------------------------------------------------
+
+_ws2812_io = [
+    (
+        "ws2812",
+        0,
+        Pins("J4"),
+        IOStandard("LVCMOS33"),
+    ),
+]
 
 # CRG ----------------------------------------------------------------------------------------------
 
@@ -121,7 +134,7 @@ class BaseSoC(SoCCore):
         board = board.lower()
         assert board in ["i5", "i9"]
         platform = colorlight_i5.Platform(board=board, revision=revision, toolchain=toolchain)
-
+        platform.add_extension(_ws2812_io) #Para el WS2812
 
 
 
@@ -140,7 +153,7 @@ class BaseSoC(SoCCore):
         # SoCCore ----------------------------------------------------------------------------------
         SoCCore.__init__(self, platform, int(sys_clk_freq), ident = "LiteX SoC on Colorlight " + board.upper(), **kwargs)
 
-        #módulos calculadora
+        # Módulos calculadora -----------------------------------------------------------------------------------------
         #       Como dice el foro
         self.submodules.calculator = Calculator(platform)
         self.csr.add("calculator")
@@ -149,6 +162,16 @@ class BaseSoC(SoCCore):
 #        for src in ["calc_core.sv", "multiplicador.sv", "divisor.sv", "raiz.sv"]:
 #            platform.add_source(os.path.join(src_dir, src))
 
+        # Módulos WS2812 8x8 --------------------------------------------------------------------------------------
+        ws2812_pad = platform.request("ws2812")
+
+        self.submodules.ws2812 = WS2812(
+            platform   = platform,
+            pad        = ws2812_pad,
+            clk_hz     = int(sys_clk_freq),
+        )
+
+        self.csr.add("ws2812")
 
         # Leds -------------------------------------------------------------------------------------
         if with_led_chaser:
