@@ -14,7 +14,7 @@ from migen import *
 from litex.gen import *
 
 from litex.build.io import DDROutput
-from litex.build.generic_platform import Pins, IOStandard #Pines para el ws2812
+from litex.build.generic_platform import Pins, IOStandard, Subsignal, Misc #Pines para el ws2812 y el SSD1306 (I2C)
 
 from litex_boards.platforms import colorlight_i5
 
@@ -39,6 +39,7 @@ if str(PERIFERICOS_DIR) not in sys.path:
 
 from calculadora import Calculator
 from ws2812 import WS2812
+from i2c import I2CMaster
 
 # WS2812 -------------------------------------------------------------------------------------------
 
@@ -48,6 +49,27 @@ _ws2812_io = [
         0,
         Pins("J4"),
         IOStandard("LVCMOS33"),
+    ),
+]
+
+# I2C OLED -----------------------------------------------------------------------------------------
+
+_i2c_oled_io = [
+    (
+        "i2c_oled",
+        0,
+        Subsignal(
+            "scl",
+            Pins("E5"),
+            IOStandard("LVCMOS33"),
+            Misc("PULLMODE=UP"),
+        ),
+        Subsignal(
+            "sda",
+            Pins("F5"),
+            IOStandard("LVCMOS33"),
+            Misc("PULLMODE=UP"),
+        ),
     ),
 ]
 
@@ -135,6 +157,7 @@ class BaseSoC(SoCCore):
         assert board in ["i5", "i9"]
         platform = colorlight_i5.Platform(board=board, revision=revision, toolchain=toolchain)
         platform.add_extension(_ws2812_io) #Para el WS2812
+        platform.add_extension(_i2c_oled_io) #Para el SSD1306 (I2C)
 
 
 
@@ -173,6 +196,17 @@ class BaseSoC(SoCCore):
 
         self.csr.add("ws2812")
 
+        # Módulos I2C --------------------------------------------------------------------------------------        
+        i2c_oled_pads = platform.request("i2c_oled")
+
+        self.submodules.i2c_oled = I2CMaster(
+            platform = platform,
+            pads     = i2c_oled_pads,
+            clk_hz   = int(sys_clk_freq),
+            i2c_hz   = 100_000,
+        )
+
+        self.csr.add("i2c_oled")
         # Leds -------------------------------------------------------------------------------------
         if with_led_chaser:
             leds_n = platform.request_all("user_led_n")
