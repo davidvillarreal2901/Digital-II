@@ -14,8 +14,7 @@ main.o: main.c \
  /opt/homebrew/Cellar/riscv-gnu-toolchain/main/lib/gcc/riscv64-unknown-elf/15.1.0/include/stddef.h \
  /Users/david/litex/litex/litex/soc/cores/cpu/vexriscv/system.h \
  /Users/david/litex/litex/litex/soc/cores/cpu/vexriscv/csr-defs.h \
- /Users/david/litex/litex/litex/soc/software/include/hw/common.h \
- ws2812_ui.h imagen_ws2812.h
+ /Users/david/litex/litex/litex/soc/software/include/hw/common.h
 /Users/david/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/libc/include/stdint.h:
 /Users/david/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/libc/include/sys/cdefs.h:
 /Users/david/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/libc/include/sys/config.h:
@@ -32,5 +31,3 @@ main.o: main.c \
 /Users/david/litex/litex/litex/soc/cores/cpu/vexriscv/system.h:
 /Users/david/litex/litex/litex/soc/cores/cpu/vexriscv/csr-defs.h:
 /Users/david/litex/litex/litex/soc/software/include/hw/common.h:
-ws2812_ui.h:
-imagen_ws2812.h:
