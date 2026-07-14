@@ -14,7 +14,7 @@ from migen import *
 from litex.gen import *
 
 from litex.build.io import DDROutput
-from litex.build.generic_platform import Pins, IOStandard, Subsignal, Misc #Pines para el ws2812 y el SSD1306 (I2C)
+from litex.build.generic_platform import Pins, IOStandard, Subsignal, Misc #Pines para el ws2812 y el SSD1306 (I2C) y para el HUB75
 
 from litex_boards.platforms import colorlight_i5
 
@@ -40,6 +40,7 @@ if str(PERIFERICOS_DIR) not in sys.path:
 from calculadora import Calculator
 from ws2812 import WS2812
 from i2c import I2CMaster
+from hub75 import HUB75
 
 # WS2812 -------------------------------------------------------------------------------------------
 
@@ -70,6 +71,50 @@ _i2c_oled_io = [
             IOStandard("LVCMOS33"),
             Misc("PULLMODE=UP"),
         ),
+    ),
+]
+
+# HUB75 64x64 -----------------------------------------------------------------
+
+_hub75_io = [
+    (
+        "hub75",
+        0,
+
+        Subsignal(
+            "clk",
+            Pins("C17"),
+        ),
+
+        Subsignal(
+            "lat",
+            Pins("D1"),
+        ),
+
+        Subsignal(
+            "oe",
+            Pins("C1"),
+        ),
+
+        # A, B, C, D, E
+        Subsignal(
+            "row",
+            Pins("E2 D2 C2 B1 A18"),
+        ),
+
+        # R1, G1, B1
+        Subsignal(
+            "rgb0",
+            Pins("C3 A3 E3"),
+        ),
+
+        Subsignal(
+            "rgb1",
+            Pins("D3 C4 B4"),
+        ),
+
+        IOStandard("LVCMOS33"),
+        Misc("DRIVE=8"),
     ),
 ]
 
@@ -158,7 +203,7 @@ class BaseSoC(SoCCore):
         platform = colorlight_i5.Platform(board=board, revision=revision, toolchain=toolchain)
         platform.add_extension(_ws2812_io) #Para el WS2812
         platform.add_extension(_i2c_oled_io) #Para el SSD1306 (I2C)
-
+        platform.add_extension(_hub75_io) #Para el HUB75
 
 
 
@@ -205,8 +250,23 @@ class BaseSoC(SoCCore):
             clk_hz   = int(sys_clk_freq),
             i2c_hz   = 100_000,
         )
-
         self.csr.add("i2c_oled")
+
+
+        # HUB75 -----------------------------------------------------------------------
+
+        hub75_pads = platform.request("hub75")
+
+        self.submodules.hub75 = HUB75(
+            platform       = platform,
+            pads           = hub75_pads,
+            sys_clk_hz     = int(sys_clk_freq),
+            panel_clk_hz   = 6_000_000,
+        )
+
+        self.csr.add("hub75")
+
+
         # Leds -------------------------------------------------------------------------------------
         if with_led_chaser:
             leds_n = platform.request_all("user_led_n")

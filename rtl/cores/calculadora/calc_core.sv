@@ -19,17 +19,19 @@ module calc_core (
     localparam OP_DIV  = 3'd3;
     localparam OP_SQRT = 3'd4;
 
+    /*
+     * LAUNCH_WAIT evita consumir el TERMINADO pegado de la operación anterior.
+     */
     typedef enum logic [1:0] {
         IDLE,
+        LAUNCH_WAIT,
         WAIT_RESULT
     } state_t;
 
     state_t state;
 
-    logic rst_n;
     logic [2:0] active_opcode;
-
-    assign rst_n = ~rst;
+    logic       rst_n;
 
     logic start_mult;
     logic start_div;
@@ -43,34 +45,40 @@ module calc_core (
     logic fin_div;
     logic fin_raiz;
 
+    assign rst_n = ~rst;
+
+
     multiplicador u_mult (
-        .clk(clk),
-        .rst_n(rst_n),
-        .iniciar(start_mult),
-        .operando_a(op1[15:0]),
-        .operando_b(op2[15:0]),
-        .producto(res_mult),
-        .terminado(fin_mult)
+        .clk        (clk),
+        .rst_n      (rst_n),
+        .iniciar    (start_mult),
+        .operando_a (op1[15:0]),
+        .operando_b (op2[15:0]),
+        .producto   (res_mult),
+        .terminado  (fin_mult)
     );
+
 
     divisor u_div (
-        .clk(clk),
-        .rst_n(rst_n),
-        .iniciar(start_div),
-        .dividendo(op1[15:0]),
-        .divisor(op2[15:0]),
-        .cociente(res_div),
-        .terminado(fin_div)
+        .clk       (clk),
+        .rst_n     (rst_n),
+        .iniciar   (start_div),
+        .dividendo (op1[15:0]),
+        .divisor   (op2[15:0]),
+        .cociente  (res_div),
+        .terminado (fin_div)
     );
 
+
     raiz u_raiz (
-        .clk(clk),
-        .rst_n(rst_n),
-        .iniciar(start_raiz),
-        .radicando(op1[15:0]),
-        .raiz_res(res_raiz),
-        .terminado(fin_raiz)
+        .clk       (clk),
+        .rst_n     (rst_n),
+        .iniciar   (start_raiz),
+        .radicando (op1[15:0]),
+        .raiz_res  (res_raiz),
+        .terminado (fin_raiz)
     );
+
 
     always_ff @(posedge clk) begin
         if (rst) begin
@@ -83,7 +91,9 @@ module calc_core (
             start_mult    <= 1'b0;
             start_div     <= 1'b0;
             start_raiz    <= 1'b0;
+
         end else begin
+            /* Pulsos de inicio de un solo ciclo. */
             start_mult <= 1'b0;
             start_div  <= 1'b0;
             start_raiz <= 1'b0;
@@ -94,10 +104,10 @@ module calc_core (
                     busy <= 1'b0;
 
                     if (start) begin
-                        active_opcode <= opcode;
                         done          <= 1'b0;
                         error         <= 1'b0;
                         busy          <= 1'b1;
+                        active_opcode <= opcode;
 
                         case (opcode)
 
@@ -115,24 +125,24 @@ module calc_core (
 
                             OP_MUL: begin
                                 start_mult <= 1'b1;
-                                state      <= WAIT_RESULT;
+                                state      <= LAUNCH_WAIT;
                             end
 
                             OP_DIV: begin
-                                if (op2 == 0) begin
+                                if (op2 == 32'd0) begin
                                     result <= 32'd0;
                                     error  <= 1'b1;
                                     done   <= 1'b1;
                                     busy   <= 1'b0;
                                 end else begin
                                     start_div <= 1'b1;
-                                    state     <= WAIT_RESULT;
+                                    state     <= LAUNCH_WAIT;
                                 end
                             end
 
                             OP_SQRT: begin
                                 start_raiz <= 1'b1;
-                                state      <= WAIT_RESULT;
+                                state      <= LAUNCH_WAIT;
                             end
 
                             default: begin
@@ -145,6 +155,17 @@ module calc_core (
                         endcase
                     end
                 end
+
+
+                LAUNCH_WAIT: begin
+                    /*
+                     * En este flanco el submódulo ya recibió INICIAR y
+                     * limpia su señal TERMINADO anterior. Solo después
+                     * pasamos a esperar el nuevo resultado.
+                     */
+                    state <= WAIT_RESULT;
+                end
+
 
                 WAIT_RESULT: begin
                     case (active_opcode)
@@ -177,13 +198,23 @@ module calc_core (
                         end
 
                         default: begin
-                            error <= 1'b1;
-                            done  <= 1'b1;
-                            busy  <= 1'b0;
-                            state <= IDLE;
+                            result <= 32'd0;
+                            error  <= 1'b1;
+                            done   <= 1'b1;
+                            busy   <= 1'b0;
+                            state  <= IDLE;
                         end
 
                     endcase
+                end
+
+
+                default: begin
+                    state  <= IDLE;
+                    result <= 32'd0;
+                    done   <= 1'b0;
+                    busy   <= 1'b0;
+                    error  <= 1'b1;
                 end
 
             endcase
