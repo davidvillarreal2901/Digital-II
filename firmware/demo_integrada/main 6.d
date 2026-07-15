@@ -1,4 +1,4 @@
-main.o: main.c ../demo_integrada/main.c \
+main.o: main.c \
  /Users/david/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/libc/include/stdint.h \
  /Users/david/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/libc/include/sys/cdefs.h \
  /Users/david/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/libc/include/sys/config.h \
@@ -15,9 +15,7 @@ main.o: main.c ../demo_integrada/main.c \
  /Users/david/litex/litex/litex/soc/cores/cpu/vexriscv/system.h \
  /Users/david/litex/litex/litex/soc/cores/cpu/vexriscv/csr-defs.h \
  /Users/david/litex/litex/litex/soc/software/include/hw/common.h \
- ../demo_integrada/ws2812_ui.h ../demo_integrada/imagen_ws2812.h \
- ../demo_integrada/hub75_ui.h ../demo_integrada/hub75_asset.h
-../demo_integrada/main.c:
+ ws2812_ui.h imagen_ws2812.h hub75_ui.h hub75_asset.h
 /Users/david/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/libc/include/stdint.h:
 /Users/david/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/libc/include/sys/cdefs.h:
 /Users/david/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/libc/include/sys/config.h:
@@ -34,7 +32,7 @@ main.o: main.c ../demo_integrada/main.c \
 /Users/david/litex/litex/litex/soc/cores/cpu/vexriscv/system.h:
 /Users/david/litex/litex/litex/soc/cores/cpu/vexriscv/csr-defs.h:
 /Users/david/litex/litex/litex/soc/software/include/hw/common.h:
-../demo_integrada/ws2812_ui.h:
-../demo_integrada/imagen_ws2812.h:
-../demo_integrada/hub75_ui.h:
-../demo_integrada/hub75_asset.h:
+ws2812_ui.h:
+imagen_ws2812.h:
+hub75_ui.h:
+hub75_asset.h:
