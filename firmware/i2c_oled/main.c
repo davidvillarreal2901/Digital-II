@@ -887,11 +887,7 @@ static void process_line(char *line)
     }
 
     /*
-     * Operación binaria:
-     *   12+5
-     *   12 - 5
-     *   7*6
-     *   100/4
+     * Operación binaria
      */
     position = 0;
 

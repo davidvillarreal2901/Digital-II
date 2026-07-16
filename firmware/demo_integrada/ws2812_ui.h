@@ -318,7 +318,7 @@ static void matrix_moving_pixel(void)
 
 
 /*
- * Muestra la imagen generada previamente desde Kirby.
+ * Muestra la imagen generada.
  */
 static void matrix_show_help_image(void)
 {

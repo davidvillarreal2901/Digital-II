@@ -189,15 +189,15 @@ static void ws2812_sqrt_show_frame(void)
 static void matrix_show_sqrt_symbol(void)
 {
     /*
-     * Bitmap 8x8 de una raiz cuadrada:
+     * Bitmap 8x8 de una raiz cuadrada o algo así:
      *
-     *    #####
+     *      #   #   #   #   #   
+     *      #
+     *      #
+     *      #
+     * #    #
+     *  #   #
      *    #
-     *    #
-     *    #
-     * #  #
-     *  # #
-     *   #
      */
     static const uint8_t sqrt_bitmap[8] = {
         0x1F,
@@ -1259,7 +1259,6 @@ static void process_line(char *line)
 
         /*
          * La HUB75 muestra el contenido escrito después de T.
-         * Ejemplo: T HOLA DAVID -> muestra HOLA DAVID.
          */
         hub75_show_uart_text(
             &line[2],
@@ -1343,11 +1342,7 @@ static void process_line(char *line)
     }
 
     /*
-     * Operación binaria:
-     *   12+5
-     *   12 - 5
-     *   7*6
-     *   100/4
+     * Operación binaria
      */
     position = 0;
 

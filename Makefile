@@ -9,6 +9,12 @@ SHELL := /bin/bash
 PYTHON       ?= python
 LITEX_TERM   ?= litex_term
 
+IVERILOG     ?= iverilog
+VVP          ?= vvp
+GTKWAVE      ?= gtkwave
+
+SIM_BUILD_DIR := build/simulacion
+
 SOC_TARGET   := integracion_litex/soc/colorlight_i5.py
 BOARD        := i9
 REVISION     := 7.2
@@ -69,6 +75,15 @@ SCRIPT_HUB75    := herramientas/hub75/recurso_a_c.py
 .PHONY: recursos
 .PHONY: interactiva-recursos
 .PHONY: automatica-recursos
+.PHONY: verificar-simulacion
+.PHONY: simular
+.PHONY: simular-calculadora
+.PHONY: simular-i2c
+.PHONY: simular-ws2812
+.PHONY: ondas-calculadora
+.PHONY: ondas-i2c
+.PHONY: ondas-ws2812
+.PHONY: limpiar-simulacion
 
 
 # =============================================================================
@@ -131,6 +146,27 @@ ayuda:
 	@echo ""
 	@echo " make automatica-recursos IMAGEN_WS2812=... RECURSO_HUB75=..."
 	@echo "     Genera recursos y ejecuta la demo automática."
+	@echo ""
+	@echo " make simular"
+	@echo "     Ejecuta los testbenches de calculadora, I2C y WS2812."
+	@echo ""
+	@echo " make simular-calculadora"
+	@echo "     Simula calc_core y sus unidades aritméticas."
+	@echo ""
+	@echo " make simular-i2c"
+	@echo "     Simula la transacción del maestro I2C."
+	@echo ""
+	@echo " make simular-ws2812"
+	@echo "     Simula el framebuffer y transmisor WS2812."
+	@echo ""
+	@echo " make ondas-calculadora"
+	@echo "     Abre las señales de la calculadora en GTKWave."
+	@echo ""
+	@echo " make ondas-i2c"
+	@echo "     Abre las señales I2C en GTKWave."
+	@echo ""
+	@echo " make ondas-ws2812"
+	@echo "     Abre las señales WS2812 en GTKWave."
 	@echo ""
 	@echo ""
 	@echo " make limpiar"
@@ -441,6 +477,178 @@ interactiva-recursos: recursos
 
 automatica-recursos: recursos
 	$(MAKE) automatica PORT="$(PORT)"
+	
+# =============================================================================
+# SIMULACIÓN RTL
+# =============================================================================
+
+verificar-simulacion:
+	@command -v "$(IVERILOG)" >/dev/null 2>&1 || { \
+		echo ""; \
+		echo "ERROR: no se encontró iverilog."; \
+		echo "Instálalo con: brew install icarus-verilog"; \
+		exit 1; \
+	}
+
+	@command -v "$(VVP)" >/dev/null 2>&1 || { \
+		echo ""; \
+		echo "ERROR: no se encontró vvp."; \
+		echo "Instálalo con: brew install icarus-verilog"; \
+		exit 1; \
+	}
+
+	@mkdir -p "$(SIM_BUILD_DIR)"
+
+
+simular:
+	@echo ""
+	@echo "===================================================="
+	@echo " EJECUTANDO TODAS LAS SIMULACIONES RTL"
+	@echo "===================================================="
+	@echo ""
+
+	$(MAKE) simular-calculadora
+	$(MAKE) simular-i2c
+	$(MAKE) simular-ws2812
+
+	@echo ""
+	@echo "===================================================="
+	@echo " TODAS LAS SIMULACIONES FINALIZARON"
+	@echo "===================================================="
+	@echo ""
+	@echo "Formas de onda generadas en:"
+	@echo "$(SIM_BUILD_DIR)"
+	@echo ""
+
+
+simular-calculadora: verificar-simulacion
+	@echo ""
+	@echo "===================================================="
+	@echo " SIMULACIÓN: CALCULADORA"
+	@echo "===================================================="
+	@echo ""
+
+	$(IVERILOG) \
+		-g2012 \
+		-Wall \
+		-s calc_core_tb \
+		-o "$(SIM_BUILD_DIR)/calc_core_tb.out" \
+		testbench/calculadora/calc_core_tb.sv \
+		rtl/cores/calculadora/calc_core.sv \
+		rtl/cores/calculadora/multiplicador.sv \
+		rtl/cores/calculadora/divisor.sv \
+		rtl/cores/calculadora/raiz.sv
+
+	@cd "$(SIM_BUILD_DIR)" && \
+		"$(VVP)" calc_core_tb.out
+
+	@echo ""
+	@echo "Forma de onda:"
+	@echo "$(SIM_BUILD_DIR)/calc_core_tb.vcd"
+	@echo ""
+
+
+simular-i2c: verificar-simulacion
+	@echo ""
+	@echo "===================================================="
+	@echo " SIMULACIÓN: MAESTRO I2C"
+	@echo "===================================================="
+	@echo ""
+
+	$(IVERILOG) \
+		-g2012 \
+		-Wall \
+		-s i2c_master_tb \
+		-o "$(SIM_BUILD_DIR)/i2c_master_tb.out" \
+		testbench/i2c/i2c_master_tb.sv \
+		rtl/cores/i2c/i2c_master.v
+
+	@cd "$(SIM_BUILD_DIR)" && \
+		"$(VVP)" i2c_master_tb.out
+
+	@echo ""
+	@echo "Forma de onda:"
+	@echo "$(SIM_BUILD_DIR)/i2c_master_tb.vcd"
+	@echo ""
+
+
+simular-ws2812: verificar-simulacion
+	@echo ""
+	@echo "===================================================="
+	@echo " SIMULACIÓN: WS2812"
+	@echo "===================================================="
+	@echo ""
+
+	$(IVERILOG) \
+		-g2012 \
+		-Wall \
+		-s ws2812_matrix_tb \
+		-o "$(SIM_BUILD_DIR)/ws2812_matrix_tb.out" \
+		testbench/ws2812/ws2812_matrix_tb.sv \
+		rtl/cores/ws2812/ws2812_matrix_core.v \
+		rtl/cores/ws2812/ws2812_framebuffer.v
+
+	@cd "$(SIM_BUILD_DIR)" && \
+		"$(VVP)" ws2812_matrix_tb.out
+
+	@echo ""
+	@echo "Forma de onda:"
+	@echo "$(SIM_BUILD_DIR)/ws2812_matrix_tb.vcd"
+	@echo ""
+
+
+ondas-calculadora:
+	@test -f "$(SIM_BUILD_DIR)/calc_core_tb.vcd" || { \
+		echo "Primero ejecuta: make simular-calculadora"; \
+		exit 1; \
+	}
+
+	@command -v "$(GTKWAVE)" >/dev/null 2>&1 || { \
+		echo "ERROR: no se encontró GTKWave."; \
+		exit 1; \
+	}
+
+	$(GTKWAVE) "$(SIM_BUILD_DIR)/calc_core_tb.vcd"
+
+
+ondas-i2c:
+	@test -f "$(SIM_BUILD_DIR)/i2c_master_tb.vcd" || { \
+		echo "Primero ejecuta: make simular-i2c"; \
+		exit 1; \
+	}
+
+	@command -v "$(GTKWAVE)" >/dev/null 2>&1 || { \
+		echo "ERROR: no se encontró GTKWave."; \
+		exit 1; \
+	}
+
+	$(GTKWAVE) "$(SIM_BUILD_DIR)/i2c_master_tb.vcd"
+
+
+ondas-ws2812:
+	@test -f "$(SIM_BUILD_DIR)/ws2812_matrix_tb.vcd" || { \
+		echo "Primero ejecuta: make simular-ws2812"; \
+		exit 1; \
+	}
+
+	@command -v "$(GTKWAVE)" >/dev/null 2>&1 || { \
+		echo "ERROR: no se encontró GTKWave."; \
+		exit 1; \
+	}
+
+	$(GTKWAVE) "$(SIM_BUILD_DIR)/ws2812_matrix_tb.vcd"
+
+
+limpiar-simulacion:
+	@echo ""
+	@echo "Eliminando resultados de simulación..."
+
+	rm -rf "$(SIM_BUILD_DIR)"
+
+	@echo "Simulación limpia."
+	@echo ""
+
+
 # =============================================================================
 # INFORMACIÓN DEL PROYECTO
 # =============================================================================
@@ -546,7 +754,7 @@ limpiar:
 	@echo ""
 
 
-limpiar-todo: limpiar
+limpiar-todo: limpiar limpiar-simulacion
 	@echo "Eliminando síntesis del SoC..."
 
 	rm -rf "$(BUILD_DIR)"

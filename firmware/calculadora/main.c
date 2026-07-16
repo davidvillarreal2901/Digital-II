@@ -126,10 +126,6 @@ static uint32_t calc_exec(uint32_t a, uint32_t b, uint32_t op, int *ok)
     calculator_op2_write(b);
     calculator_opcode_write(op);
 
-    /*
-     * Pulso de start. Si en calculator.py conectaste start.re,
-     * con escribir basta; si conectaste storage, esto también sirve.
-     */
     calculator_start_write(1);
     delay(100);
     calculator_start_write(0);

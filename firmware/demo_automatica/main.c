@@ -1,8 +1,5 @@
 /*
- * Demostración automática del sistema integrado.
- *
- * Reutiliza el procesamiento de comandos del firmware interactivo
- * y ejecuta una secuencia continua sin esperar entradas por UART.
+ * Demostración automática de todas laj funcionalidades.
  */
 
 #define main main_interactivo_no_usado

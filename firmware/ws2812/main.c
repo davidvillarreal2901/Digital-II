@@ -163,6 +163,7 @@ static int ws2812_show(void)
 //
 // La prueba del pixel movil permitira determinar si la matriz fisica usa
 // orden lineal o serpentino.
+// Al final fue lineal 
 // -----------------------------------------------------------------------------
 
 static uint32_t ws2812_xy_to_index(
